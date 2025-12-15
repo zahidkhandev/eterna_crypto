@@ -1,29 +1,84 @@
-version: "3"
+version: '3.8'
+name: dex-engine
 
 services:
-  web:
-    container_name: web
-    build:
-      context: .
-      dockerfile: ./apps/web/Dockerfile
-    restart: always
+  # Redis Service
+  redis:
+    image: ${IMAGE_REGISTRY:-docker.io/}library/redis:8-alpine
+    pull_policy: ${PULL_POLICY:-missing}
+    container_name: dex-redis
     ports:
-      - 3000:3000
+      - '${REDIS_PORT:-6379}:6379'
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-dex123}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
     networks:
-      - app_network
-  api:
-    container_name: api
-    build:
-      context: .
-      dockerfile: ./apps/api/Dockerfile
-    restart: always
-    ports:
-      - 3001:3001
-    networks:
-      - app_network
+      - dex_network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-dex123}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
-# Define a network, which allows containers to communicate
-# with each other, by using their container name as a hostname
+  # Postgres Service
+  postgres:
+    image: ${IMAGE_REGISTRY:-docker.io/}pgvector/pgvector:pg17
+    pull_policy: ${PULL_POLICY:-missing}
+    container_name: dex-postgres
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-dex_engine}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dex_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-user} -d ${DB_NAME:-dex_engine}']
+      interval: 10s
+      retries: 5
+      timeout: 5s
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  postgres_data:
+    driver: local
+    name: dex_postgres_data
+  redis_data:
+    driver: local
+    name: dex_redis_data
+
 networks:
-  app_network:
-    external: true
+  dex_network:
+    driver: bridge
+    name: dex_network

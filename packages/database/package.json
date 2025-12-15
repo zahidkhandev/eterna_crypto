@@ -1,0 +1,21 @@
+{
+  "name": "@repo/database",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "7.1.0",
+    "@prisma/adapter-pg": "^6.0.0",
+    "ioredis": "^5.8.2"
+  },
+  "devDependencies": {
+    "prisma": "7.1.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.9.3",
+    "@types/node": "^25.0.2"
+  }
+}

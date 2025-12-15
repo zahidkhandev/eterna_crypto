@@ -1,27 +1,43 @@
 {
-  "name": "with-docker",
-  "version": "0.0.0",
+  "name": "dex-engine",
   "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "clean": "turbo run clean",
-    "dev": "turbo run dev",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "lint": "turbo run lint",
-    "test": "turbo run test"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "prettier": "^3.2.5",
-    "turbo": "^2.6.3"
-  },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=7.0.0"
+    "node": ">=18"
   },
-  "packageManager": "npm@11.6.2",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:api": "turbo run dev --filter=@repo/api",
+    "dev:worker": "turbo run dev --filter=@repo/worker",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rimraf node_modules .turbo",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md,yaml,yml}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md,yaml,yml}\"",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "db:studio": "npx prisma studio --schema=packages/database/prisma/schema.prisma",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:restart": "npm run docker:down && npm run docker:up",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v",
+    "docker:health": "docker-compose ps && docker exec dex-postgres pg_isready -U user && docker exec dex-redis redis-cli -a dex123 ping",
+    "podman:up": "podman-compose up -d",
+    "podman:down": "podman-compose down",
+    "podman:restart": "npm run podman:down && npm run podman:up",
+    "podman:logs": "podman-compose logs -f",
+    "podman:clean": "podman-compose down -v",
+    "podman:health": "podman-compose ps && podman exec dex-postgres pg_isready -U user && podman exec dex-redis redis-cli -a dex123 ping",
+    "setup": "npm install && npm run db:generate"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "prettier": "^3.7.4",
+    "rimraf": "^6.0.0"
+  },
+  "packageManager": "npm@11.7.0"
 }
