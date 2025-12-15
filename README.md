@@ -174,13 +174,3 @@ The infrastructure is defined in a single compose file designed for resilience a
 
 - `${IMAGE_REGISTRY}`: Dynamic prefix allows switching between `docker.io` (public hub) and `localhost/` (local Podman cache) without changing the compose file.
 - `${PULL_POLICY}`: Controls whether the runtime should try to download images (`missing`) or strictly use what is available locally (`never`), vital for offline/proxy environments.
-
-<!-- end list -->
-
-```
-
-```
-
-```
-
-```
